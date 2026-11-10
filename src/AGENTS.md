@@ -31,14 +31,16 @@ Vite + React 19 클라이언트. 서버(`server/`)와는 `/api/*` HTTP로만 통
 Do:
 - 생성 코드는 반드시 `LiveProvider`의 `noInline`으로 렌더링한다. 이 모드에서는 코드가 `render(<X />)`를 호출해야 화면이 그려진다 (`components/LivePreview.tsx:240`). 서버가 `ensureRenderCall`로 보정하므로 (`server/generator.ts:13-21`) 클라이언트에서 `noInline`을 빼거나 중복 보정하지 않는다.
 - 미리보기 새로고침은 `LivePreview`의 `key`를 바꿔 리마운트하는 방식을 유지한다 (`components/ComponentCard.tsx:325`). 애니메이션 컴포넌트 재실행 용도다.
-- 재생성은 `App.handleGenerate`를 거쳐 호출한다. 키 검증 로직이 그곳에 있다 (`App.tsx:34-40`).
+- 재생성은 `App.handleGenerate`를 거쳐 호출한다. 키 검증과 프롬프트 히스토리 기록이 그곳에 있다 (`App.tsx:37-44`).
+- 브라우저 저장소 접근은 `utils/storage.ts`의 `readStorage`/`writeStorage`/`removeStorage`와 `STORAGE_KEYS`만 거친다. 직접 `localStorage`를 호출하지 않는다 (차단/용량 초과 시 앱이 죽지 않도록 try/catch로 감싸져 있다). 읽은 값은 신뢰하지 말고 형태를 검증한다 (`hooks/useApiSettings.ts`, `utils/components.ts`).
 
 Don't:
-- API 키를 `localStorage`/`sessionStorage`/쿠키/URL에 저장하지 않는다. 키는 `App`의 메모리 상태로만 두고 요청 body로만 전송한다 (`App.tsx:14`, `hooks/useComponentGenerator.ts:188`).
-- 서버 환경 키 값을 클라이언트로 받지 않는다. `/api/config`는 provider별 boolean만 반환하며 클라이언트는 그것만 사용한다 (`App.tsx:25-27`). 키 값을 노출하는 응답 필드를 추가하지 않는다.
-- provider 전환 시 입력 키 초기화를 제거하지 않는다. 다른 제공자에 키가 잘못 전송되는 것을 막는다 (`App.tsx:42-45`).
-- 키를 빈 문자열로 body에 보내지 않는다. `apiKey`가 없으면 필드를 생략해 서버 env 키를 쓰게 한다 (`hooks/useComponentGenerator.ts:188`, `App.tsx:39`).
-- 새 로직을 추가할 때 테스트 경계를 인지한다. 현재 테스트는 `PromptInput`뿐이며 `App`, `useComponentGenerator`, `ComponentCard`는 미테스트다. 이 파일들의 분기 로직(키 검증, 에러 처리)을 수정하면 테스트를 함께 추가한다.
+- API 키는 사용자가 "이 브라우저에 키 저장"을 켠 경우에만 `localStorage`에 저장한다 (`hooks/useApiSettings.ts`). 기본은 메모리 상태이며, 쿠키/URL/`sessionStorage`에는 저장하지 않는다. 키 저장을 끄면 저장된 키를 즉시 삭제하는 동작을 유지한다. 키는 요청 body로만 전송한다 (`hooks/useComponentGenerator.ts:35`).
+- 서버 환경 키 값을 클라이언트로 받지 않는다. `/api/config`는 provider별 boolean만 반환하며 클라이언트는 그것만 사용한다 (`App.tsx:28-31`). 키 값을 노출하는 응답 필드를 추가하지 않는다.
+- 키를 제공자와 분리해 보관하는 구조를 깨지 않는다. 키는 `provider`별로 저장되어 다른 제공자로 잘못 전송되지 않는다 (`hooks/useApiSettings.ts`의 `KeyMap`). 단일 `apiKey` 문자열로 되돌리지 않는다.
+- 키를 빈 문자열로 body에 보내지 않는다. `apiKey`가 없으면 필드를 생략해 서버 env 키를 쓰게 한다 (`hooks/useComponentGenerator.ts:35`, `App.tsx:43`).
+- 생성된 컴포넌트는 최근 30개만 저장한다 (`MAX_STORED_COMPONENTS`). 코드 문자열이 커서 전부 저장하면 localStorage 용량(약 5MB)을 넘길 수 있다. 저장 상한을 없애지 않는다.
+- 새 로직을 추가할 때 테스트를 함께 추가한다. 훅과 `App`의 보존 동작은 `hooks/*.test.ts`, `App.test.tsx`가 덮고 있다. `ComponentCard`는 아직 미테스트다.
 
 ## Maintenance
 

@@ -54,6 +54,42 @@ describe('PromptInput', () => {
     expect(onGenerate).not.toHaveBeenCalled();
   });
 
+  it('히스토리가 없으면 최근 요청 영역을 보여주지 않는다', () => {
+    render(<PromptInput onGenerate={vi.fn()} isLoading={false} />);
+    expect(screen.queryByText('최근 요청')).not.toBeInTheDocument();
+  });
+
+  it('히스토리 항목을 클릭하면 입력창에 채워진다', async () => {
+    const user = userEvent.setup();
+    render(
+      <PromptInput
+        onGenerate={vi.fn()}
+        isLoading={false}
+        history={['프로필 카드', '검색 바']}
+        onClearHistory={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('최근 요청')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '검색 바' }));
+    expect(screen.getByRole('textbox')).toHaveValue('검색 바');
+  });
+
+  it('기록 지우기를 누르면 onClearHistory가 호출된다', async () => {
+    const onClearHistory = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <PromptInput
+        onGenerate={vi.fn()}
+        isLoading={false}
+        history={['a']}
+        onClearHistory={onClearHistory}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: '기록 지우기' }));
+    expect(onClearHistory).toHaveBeenCalledTimes(1);
+  });
+
   it('정확히 500자이면 에러 없이 생성할 수 있다', () => {
     render(<PromptInput onGenerate={vi.fn()} isLoading={false} />);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: '가'.repeat(500) } });

@@ -4,6 +4,8 @@ import { validatePrompt, MAX_PROMPT_LENGTH } from '../utils/validatePrompt';
 interface PromptInputProps {
   onGenerate: (prompt: string) => void;
   isLoading: boolean;
+  history?: string[];
+  onClearHistory?: () => void;
 }
 
 const EXAMPLES = [
@@ -15,7 +17,7 @@ const EXAMPLES = [
   '테이블 행 상세보기 패널. 선택한 고객의 기본 정보와 최근 활동 표시',
 ];
 
-export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
+export function PromptInput({ onGenerate, isLoading, history = [], onClearHistory }: PromptInputProps) {
   const [prompt, setPrompt] = useState('');
   const validation = validatePrompt(prompt);
 
@@ -74,6 +76,32 @@ export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
           </button>
         </div>
       </form>
+
+      {history.length > 0 && (
+        <div className="examples history">
+          <div className="history-head">
+            <h3 className="examples-title">최근 요청</h3>
+            {onClearHistory && (
+              <button className="history-clear" onClick={onClearHistory} type="button">
+                기록 지우기
+              </button>
+            )}
+          </div>
+          <ul className="examples-list">
+            {history.map((item) => (
+              <li key={item}>
+                <button
+                  className="example-item"
+                  onClick={() => handleExampleClick(item)}
+                  type="button"
+                >
+                  {item}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="examples">
         <h3 className="examples-title">예시를 불러와 시작하기</h3>

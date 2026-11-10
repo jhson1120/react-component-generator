@@ -3,6 +3,8 @@ import { PromptInput } from './components/PromptInput';
 import { ComponentCard } from './components/ComponentCard';
 import { TreeMark, MorningScene } from './components/Illustrations';
 import { useComponentGenerator } from './hooks/useComponentGenerator';
+import { useApiSettings } from './hooks/useApiSettings';
+import { usePromptHistory } from './hooks/usePromptHistory';
 import type { Provider } from './types';
 import './App.css';
 
@@ -12,9 +14,9 @@ const PROVIDER_CONFIG = {
 } as const;
 
 function App() {
-  const [apiKey, setApiKey] = useState('');
+  const { provider, setProvider, apiKey, setApiKey, rememberKey, setRememberKey } = useApiSettings();
+  const { history, addPrompt, clearHistory } = usePromptHistory();
   const [showKey, setShowKey] = useState(false);
-  const [provider, setProvider] = useState<Provider>('google');
   const [envKeys, setEnvKeys] = useState<Record<Provider, boolean>>({
     anthropic: false,
     google: false,
@@ -37,12 +39,8 @@ function App() {
       alert(`${PROVIDER_CONFIG[provider].label} API 키를 입력하거나 .env에 설정해주세요.`);
       return;
     }
+    addPrompt(prompt);
     generate(prompt, apiKey || undefined, provider);
-  };
-
-  const handleProviderChange = (newProvider: Provider) => {
-    setProvider(newProvider);
-    setApiKey('');
   };
 
   return (
@@ -58,7 +56,7 @@ function App() {
           <select
             id="provider"
             value={provider}
-            onChange={(e) => handleProviderChange(e.target.value as Provider)}
+            onChange={(e) => setProvider(e.target.value as Provider)}
           >
             {Object.entries(PROVIDER_CONFIG).map(([key, { label }]) => (
               <option key={key} value={key}>
@@ -81,6 +79,17 @@ function App() {
           <button className="btn" onClick={() => setShowKey(!showKey)} type="button">
             {showKey ? '숨기기' : '보기'}
           </button>
+          <label
+            className="menu-check"
+            title="켜면 이 브라우저의 localStorage에 키가 평문으로 저장됩니다. 공용 PC에서는 켜지 마세요."
+          >
+            <input
+              type="checkbox"
+              checked={rememberKey}
+              onChange={(e) => setRememberKey(e.target.checked)}
+            />
+            이 브라우저에 키 저장
+          </label>
         </div>
 
         <p className={`key-status ${keyReady ? 'key-status--ready' : ''}`} role="status">
@@ -107,7 +116,12 @@ function App() {
           <div className="titlebar">
             <h2>새 요청</h2>
           </div>
-          <PromptInput onGenerate={handleGenerate} isLoading={isLoading} />
+          <PromptInput
+            onGenerate={handleGenerate}
+            isLoading={isLoading}
+            history={history}
+            onClearHistory={clearHistory}
+          />
         </section>
 
         <section className="results" aria-label="생성 결과">
