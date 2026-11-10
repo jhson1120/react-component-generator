@@ -641,3 +641,24 @@
     align-items: stretch;
   }
 }
+
+.code-block {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.code-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: #eadfc8;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}

@@ -118,7 +118,7 @@ function App() {
             </div>
           )}
 
-          {isLoading && (
+          {isLoading && !components.some((c) => c.streaming) && (
             <div className="window loading" role="status">
               <div className="titlebar">
                 <h2>생성 중</h2>

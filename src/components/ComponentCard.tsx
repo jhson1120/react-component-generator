@@ -13,8 +13,16 @@ interface ComponentCardProps {
 type Tab = 'preview' | 'code';
 
 export function ComponentCard({ component, onRemove, onRegenerate, isLoading }: ComponentCardProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('preview');
+  const streaming = !!component.streaming;
+  const [activeTab, setActiveTab] = useState<Tab>(streaming ? 'code' : 'preview');
+  const [wasStreaming, setWasStreaming] = useState(streaming);
   const [previewKey, setPreviewKey] = useState(0);
+
+  // 스트리밍 시작/종료 시점에만 탭을 자동 전환한다 (렌더 중 상태 조정 패턴).
+  if (streaming !== wasStreaming) {
+    setWasStreaming(streaming);
+    setActiveTab(streaming ? 'code' : 'preview');
+  }
   const createdAt = component.createdAt.toLocaleTimeString('ko-KR', {
     hour: '2-digit',
     minute: '2-digit',
@@ -76,7 +84,7 @@ export function ComponentCard({ component, onRemove, onRegenerate, isLoading }: 
         {activeTab === 'preview' ? (
           <LivePreview key={previewKey} code={component.code} />
         ) : (
-          <CodeView code={component.code} />
+          <CodeView code={component.code} streaming={streaming} />
         )}
       </div>
     </article>
