@@ -1,5 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { GeneratedComponent, Provider } from '../types';
+import { MAX_STORED_COMPONENTS, reviveComponents } from '../utils/components';
+import { STORAGE_KEYS, readStorage, writeStorage } from '../utils/storage';
 
 interface UseComponentGeneratorReturn {
   components: GeneratedComponent[];
@@ -11,9 +13,16 @@ interface UseComponentGeneratorReturn {
 }
 
 export function useComponentGenerator(): UseComponentGeneratorReturn {
-  const [components, setComponents] = useState<GeneratedComponent[]>([]);
+  const [components, setComponents] = useState<GeneratedComponent[]>(() =>
+    reviveComponents(readStorage<unknown>(STORAGE_KEYS.components, [])),
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 용량 초과를 막기 위해 최근 N개만 저장한다. 화면에는 전부 보인다.
+  useEffect(() => {
+    writeStorage(STORAGE_KEYS.components, components.slice(0, MAX_STORED_COMPONENTS));
+  }, [components]);
 
   const generate = useCallback(async (prompt: string, apiKey: string | undefined, provider: Provider) => {
     setIsLoading(true);
