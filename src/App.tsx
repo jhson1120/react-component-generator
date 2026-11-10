@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PromptInput } from './components/PromptInput';
 import { ComponentCard } from './components/ComponentCard';
+import { TreeMark, MorningScene } from './components/Illustrations';
 import { useComponentGenerator } from './hooks/useComponentGenerator';
 import type { Provider } from './types';
 import './App.css';
@@ -48,7 +49,7 @@ function App() {
     <div className="app">
       <header className="menubar">
         <h1 className="brand">
-          <span className="brand-icon" aria-hidden="true" />
+          <TreeMark />
           React 컴포넌트 생성기
         </h1>
 
@@ -131,12 +132,9 @@ function App() {
 
           {components.length === 0 && !isLoading && (
             <div className="window empty">
-              <div className="titlebar">
-                <h2>빈 창</h2>
-              </div>
               <div className="window-body">
-                <div className="empty-screen" aria-hidden="true">
-                  <span className="cursor" />
+                <div className="empty-screen">
+                  <MorningScene />
                 </div>
                 <h2>아직 만든 컴포넌트가 없습니다</h2>
                 <p>왼쪽에 요청을 입력하고 생성하면, 이곳에 미리보기 창이 열립니다.</p>
