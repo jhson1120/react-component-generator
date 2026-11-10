@@ -10,6 +10,7 @@
 - 린트: `bun run lint`
 - 빌드/타입체크: `bun run build` (`tsc -b && vite build`)
 - 변경 후 최소 검증: `bun run lint` + `bun run test`
+- 에이전트의 `git commit`은 PreToolUse 훅(`.claude/hooks/pre-commit-test.mjs`)이 `bun run test`를 먼저 실행하며, 하나라도 실패하면 차단된다. 테스트를 삭제/skip해서 통과시키지 말고 원인을 고친다.
 
 ## Golden Rules
 
@@ -17,6 +18,17 @@ Immutable:
 - `.env`와 API 키를 커밋하거나 코드에 하드코딩하지 않는다. `.env`는 `.gitignore`로 제외되어 있다.
 - 서버 환경 키(`ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`) 값은 클라이언트로 내보내지 않는다. `/api/config`는 boolean만 반환한다 (`server/index.ts:147-157`).
 - AI 호출은 서버(`server/`)에서만 한다. 클라이언트에서 Anthropic/Google API를 직접 호출하지 않는다.
+
+Sensitive Files (민감 파일 판단 규칙):
+- 아래에 해당하면 민감 파일로 간주한다. 읽기, 수정, 복사, 출력, 로그/PR/커밋 메시지에의 인용을 모두 금지한다. `.claude/settings.json`의 `permissions.deny`가 도구 수준에서 이를 강제하지만, 이 규칙은 deny 목록에 없는 경우의 판단 기준이다.
+  - 파일명: `.env`와 그 변형(`.env.local`, `.env.production` 등), `*credential*`, `*secret*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa*`, `id_ed25519*`, `.npmrc`, `.netrc`
+  - 위치: `~/.ssh/`, `~/.aws/`, `~/.config/gcloud/`
+  - 내용: API 키, 토큰, 비밀번호, 개인 키, 연결 문자열이 들어 있는 파일 (파일명이 평범해도 해당)
+- 판단이 애매하면 민감 파일로 취급하고, 읽지 않은 채 사용자에게 확인을 요청한다.
+- 민감 파일이 필요한 작업(키 설정 등)은 사용자가 직접 하도록 안내한다. 에이전트는 값을 대신 읽거나 채우지 않는다. 필요한 변수 이름만 안내한다 (`ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`).
+- `.env.example`은 값이 없는 템플릿일 때만 허용한다. 실제 키가 들어 있으면 민감 파일로 취급한다.
+- 우회 금지: deny 규칙에 막혔을 때 `Bash`(`cat`, `type`, `Get-Content` 등), 스크립트, 다른 도구로 같은 파일에 접근하지 않는다. 막혔다는 사실을 그대로 사용자에게 보고한다.
+- 실수로 민감 값이 대화·커밋·PR에 노출되면 즉시 중단하고 사용자에게 알려 키 폐기(rotate)를 안내한다.
 
 Do:
 - AI 응답 후처리는 `server/generator.ts`의 순수 함수(`stripCodeFences`, `ensureRenderCall`)에 둔다. 부수효과가 없어 단위 테스트가 가능하다 (`server/generator.test.ts`).
