@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { validatePrompt, MAX_PROMPT_LENGTH } from '../utils/validatePrompt';
 
 interface PromptInputProps {
   onGenerate: (prompt: string) => void;
@@ -16,10 +17,11 @@ const EXAMPLES = [
 
 export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
   const [prompt, setPrompt] = useState('');
+  const validation = validatePrompt(prompt);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (prompt.trim() && !isLoading) {
+    if (prompt.trim() && validation.valid && !isLoading) {
       onGenerate(prompt.trim());
     }
   };
@@ -47,12 +49,22 @@ export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
             }
           }}
         />
+        <div className="prompt-meta">
+          <span className={`prompt-count ${validation.valid ? '' : 'prompt-count--over'}`}>
+            {prompt.length} / {MAX_PROMPT_LENGTH}
+          </span>
+          {validation.error && (
+            <p className="prompt-error" role="alert">
+              {validation.error}
+            </p>
+          )}
+        </div>
         <div className="prompt-actions">
           <span className="prompt-hint">Ctrl+Enter로도 생성할 수 있어요</span>
           <button
             type="submit"
             className="btn btn--primary btn-generate"
-            disabled={!prompt.trim() || isLoading}
+            disabled={!prompt.trim() || !validation.valid || isLoading}
           >
             {isLoading ? (
               <span className="loading-spinner">생성 중...</span>
