@@ -641,3 +641,47 @@
     align-items: stretch;
   }
 }
+
+/* ───────── 키 저장 / 최근 요청 ───────── */
+.menu-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.menu-check input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--forest);
+  cursor: pointer;
+}
+
+.history {
+  margin-top: 18px;
+}
+
+.history-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.history-clear {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.history-clear:hover {
+  color: var(--brick);
+}
